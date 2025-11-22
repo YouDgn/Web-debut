@@ -110,4 +110,5 @@ curl -X POST http://localhost:3000/api/auth/login \
 curl -X POST http://localhost:3000/api/articles \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer YOUR_TOKEN" \
-  -d '{"title":"Test","description
+  -d '{"title":"Test","description":"Description de test","prix_depart":100}'
+  
