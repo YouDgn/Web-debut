@@ -1,0 +1,58 @@
+require('dotenv').config();
+const db = require('./src/config/database');
+const { hashPassword } = require('./src/utils/hash');
+
+async function initDatabase() {
+  console.log('🔄 Initialisation de la base de données...');
+
+  try {
+    // Supprimer les données existantes
+    db.exec('DELETE FROM images');
+    db.exec('DELETE FROM articles');
+    db.exec('DELETE FROM users');
+
+    // Créer des utilisateurs fictifs
+    const users = [
+      { username: 'alice', email: 'alice@test.com', password: 'password123' },
+      { username: 'bob', email: 'bob@test.com', password: 'password123' },
+      { username: 'charlie', email: 'charlie@test.com', password: 'password123' }
+    ];
+
+    const stmtUser = db.prepare('INSERT INTO users (username, email, password) VALUES (?, ?, ?)');
+
+    for (const user of users) {
+      const hashedPassword = await hashPassword(user.password);
+      stmtUser.run(user.username, user.email, hashedPassword);
+      console.log(`✅ Utilisateur créé: ${user.username} (${user.email})`);
+    }
+
+    // Créer des articles fictifs
+    const articles = [
+      { title: 'iPhone 14 Pro', description: 'Téléphone en excellent état, peu utilisé', prix_depart: 800, user_id: 1 },
+      { title: 'MacBook Pro 2023', description: 'Ordinateur portable performant pour développeurs', prix_depart: 2000, user_id: 1 },
+      { title: 'Table vintage', description: 'Belle table en bois massif des années 70', prix_depart: 150, user_id: 2 },
+      { title: 'Console PS5', description: 'Console neuve encore sous garantie', prix_depart: 450, user_id: 2 },
+      { title: 'Vélo de course', description: 'Vélo Specialized Allez Sprint en carbone', prix_depart: 1200, user_id: 3 }
+    ];
+
+    const stmtArticle = db.prepare('INSERT INTO articles (title, description, prix_depart, user_id) VALUES (?, ?, ?, ?)');
+
+    for (const article of articles) {
+      stmtArticle.run(article.title, article.description, article.prix_depart, article.user_id);
+      console.log(`✅ Article créé: ${article.title}`);
+    }
+
+    console.log('\n✅ Base de données initialisée avec succès !');
+    console.log('\n📋 Utilisateurs de test:');
+    console.log('   - alice@test.com / password123');
+    console.log('   - bob@test.com / password123');
+    console.log('   - charlie@test.com / password123');
+
+  } catch (error) {
+    console.error('❌ Erreur lors de l\'initialisation:', error);
+  } finally {
+    db.close();
+  }
+}
+
+initDatabase();
