@@ -4,7 +4,7 @@ const { validateArticle, escapeHtml } = require('../utils/validators');
 /**
  * Créer un article
  */
-function createArticle(req, res, next) {
+async function createArticle(req, res, next) {
   try {
     const { title, description, prix_depart } = req.body;
     const userId = req.user.id;
@@ -23,17 +23,15 @@ function createArticle(req, res, next) {
     const cleanDescription = escapeHtml(description.trim());
 
     // Insertion en DB
-    const stmt = db.prepare(`
-      INSERT INTO articles (title, description, prix_depart, user_id)
-      VALUES (?, ?, ?, ?)
-    `);
-
-    const result = stmt.run(cleanTitle, cleanDescription, prix_depart, userId);
+    const result = await db.runAsync(
+      'INSERT INTO articles (title, description, prix_depart, user_id) VALUES (?, ?, ?, ?)',
+      [cleanTitle, cleanDescription, prix_depart, userId]
+    );
 
     res.status(201).json({
       message: 'Article créé avec succès',
       article: {
-        id: result.lastInsertRowid,
+        id: result.lastID,
         title: cleanTitle,
         description: cleanDescription,
         prix_depart: prix_depart,
@@ -49,9 +47,9 @@ function createArticle(req, res, next) {
 /**
  * Récupérer tous les articles
  */
-function getAllArticles(req, res, next) {
+async function getAllArticles(req, res, next) {
   try {
-    const stmt = db.prepare(`
+    const articles = await db.allAsync(`
       SELECT 
         a.id, 
         a.title, 
@@ -65,8 +63,6 @@ function getAllArticles(req, res, next) {
       ORDER BY a.created_at DESC
     `);
 
-    const articles = stmt.all();
-
     res.json({ articles });
 
   } catch (error) {
@@ -77,20 +73,18 @@ function getAllArticles(req, res, next) {
 /**
  * Récupérer un article par ID
  */
-function getArticleById(req, res, next) {
+async function getArticleById(req, res, next) {
   try {
     const { id } = req.params;
 
-    const stmt = db.prepare(`
+    const article = await db.getAsync(`
       SELECT 
         a.*, 
         u.username as author
       FROM articles a
       JOIN users u ON a.user_id = u.id
       WHERE a.id = ?
-    `);
-
-    const article = stmt.get(id);
+    `, [id]);
 
     if (!article) {
       return res.status(404).json({ 
@@ -108,17 +102,14 @@ function getArticleById(req, res, next) {
 /**
  * Récupérer les articles de l'utilisateur connecté
  */
-function getMyArticles(req, res, next) {
+async function getMyArticles(req, res, next) {
   try {
     const userId = req.user.id;
 
-    const stmt = db.prepare(`
-      SELECT * FROM articles 
-      WHERE user_id = ?
-      ORDER BY created_at DESC
-    `);
-
-    const articles = stmt.all(userId);
+    const articles = await db.allAsync(
+      'SELECT * FROM articles WHERE user_id = ? ORDER BY created_at DESC',
+      [userId]
+    );
 
     res.json({ articles });
 
