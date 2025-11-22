@@ -5,7 +5,7 @@ const fs = require('fs');
 /**
  * Upload une image pour un article
  */
-function uploadImage(req, res, next) {
+async function uploadImage(req, res, next) {
   try {
     const { articleId } = req.params;
     const userId = req.user.id;
@@ -18,8 +18,7 @@ function uploadImage(req, res, next) {
     }
 
     // Vérifier que l'article existe et appartient à l'utilisateur
-    const stmtArticle = db.prepare('SELECT * FROM articles WHERE id = ?');
-    const article = stmtArticle.get(articleId);
+    const article = await db.getAsync('SELECT * FROM articles WHERE id = ?', [articleId]);
 
     if (!article) {
       // Supprimer le fichier uploadé
@@ -38,21 +37,15 @@ function uploadImage(req, res, next) {
     }
 
     // Enregistrer l'image en DB
-    const stmtImage = db.prepare(`
-      INSERT INTO images (article_id, filename, filepath)
-      VALUES (?, ?, ?)
-    `);
-
-    const result = stmtImage.run(
-      articleId,
-      req.file.filename,
-      req.file.path
+    const result = await db.runAsync(
+      'INSERT INTO images (article_id, filename, filepath) VALUES (?, ?, ?)',
+      [articleId, req.file.filename, req.file.path]
     );
 
     res.status(201).json({
       message: 'Image uploadée avec succès',
       image: {
-        id: result.lastInsertRowid,
+        id: result.lastID,
         filename: req.file.filename,
         url: `/uploads/${req.file.filename}`
       }
@@ -70,13 +63,12 @@ function uploadImage(req, res, next) {
 /**
  * Récupérer les images d'un article
  */
-function getArticleImages(req, res, next) {
+async function getArticleImages(req, res, next) {
   try {
     const { articleId } = req.params;
 
     // Vérifier que l'article existe
-    const stmtArticle = db.prepare('SELECT * FROM articles WHERE id = ?');
-    const article = stmtArticle.get(articleId);
+    const article = await db.getAsync('SELECT * FROM articles WHERE id = ?', [articleId]);
 
     if (!article) {
       return res.status(404).json({ 
@@ -85,14 +77,10 @@ function getArticleImages(req, res, next) {
     }
 
     // Récupérer les images
-    const stmtImages = db.prepare(`
-      SELECT id, filename, uploaded_at
-      FROM images
-      WHERE article_id = ?
-      ORDER BY uploaded_at DESC
-    `);
-
-    const images = stmtImages.all(articleId);
+    const images = await db.allAsync(
+      'SELECT id, filename, uploaded_at FROM images WHERE article_id = ? ORDER BY uploaded_at DESC',
+      [articleId]
+    );
 
     // Ajouter l'URL complète pour chaque image
     const imagesWithUrl = images.map(img => ({
