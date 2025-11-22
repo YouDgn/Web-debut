@@ -1,7 +1,7 @@
 const db = require('../config/database');
 const jwt = require('jsonwebtoken');
 const { hashPassword, comparePassword } = require('../utils/hash');
-const { isValidEmail, isValidPassword, escapeHtml } = require('../utils/validators');
+const { isValidEmail, isValidPassword } = require('../utils/validators');
 
 /**
  * Connexion utilisateur
@@ -18,8 +18,7 @@ async function login(req, res, next) {
     }
 
     // Récupérer l'utilisateur depuis la DB
-    const stmt = db.prepare('SELECT * FROM users WHERE email = ?');
-    const user = stmt.get(email);
+    const user = await db.getAsync('SELECT * FROM users WHERE email = ?', [email]);
 
     if (!user) {
       return res.status(401).json({ 
@@ -74,15 +73,22 @@ function logout(req, res) {
 /**
  * Récupérer les infos de l'utilisateur connecté
  */
-function getProfile(req, res) {
-  const stmt = db.prepare('SELECT id, username, email, created_at FROM users WHERE id = ?');
-  const user = stmt.get(req.user.id);
+async function getProfile(req, res, next) {
+  try {
+    const user = await db.getAsync(
+      'SELECT id, username, email, created_at FROM users WHERE id = ?',
+      [req.user.id]
+    );
 
-  if (!user) {
-    return res.status(404).json({ error: 'Utilisateur non trouvé' });
+    if (!user) {
+      return res.status(404).json({ error: 'Utilisateur non trouvé' });
+    }
+
+    res.json({ user });
+
+  } catch (error) {
+    next(error);
   }
-
-  res.json({ user });
 }
 
 module.exports = {
