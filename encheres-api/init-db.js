@@ -7,9 +7,9 @@ async function initDatabase() {
 
   try {
     // Supprimer les données existantes
-    db.exec('DELETE FROM images');
-    db.exec('DELETE FROM articles');
-    db.exec('DELETE FROM users');
+    await db.runAsync('DELETE FROM images');
+    await db.runAsync('DELETE FROM articles');
+    await db.runAsync('DELETE FROM users');
 
     // Créer des utilisateurs fictifs
     const users = [
@@ -18,11 +18,12 @@ async function initDatabase() {
       { username: 'charlie', email: 'charlie@test.com', password: 'password123' }
     ];
 
-    const stmtUser = db.prepare('INSERT INTO users (username, email, password) VALUES (?, ?, ?)');
-
     for (const user of users) {
       const hashedPassword = await hashPassword(user.password);
-      stmtUser.run(user.username, user.email, hashedPassword);
+      await db.runAsync(
+        'INSERT INTO users (username, email, password) VALUES (?, ?, ?)',
+        [user.username, user.email, hashedPassword]
+      );
       console.log(`✅ Utilisateur créé: ${user.username} (${user.email})`);
     }
 
@@ -35,10 +36,11 @@ async function initDatabase() {
       { title: 'Vélo de course', description: 'Vélo Specialized Allez Sprint en carbone', prix_depart: 1200, user_id: 3 }
     ];
 
-    const stmtArticle = db.prepare('INSERT INTO articles (title, description, prix_depart, user_id) VALUES (?, ?, ?, ?)');
-
     for (const article of articles) {
-      stmtArticle.run(article.title, article.description, article.prix_depart, article.user_id);
+      await db.runAsync(
+        'INSERT INTO articles (title, description, prix_depart, user_id) VALUES (?, ?, ?, ?)',
+        [article.title, article.description, article.prix_depart, article.user_id]
+      );
       console.log(`✅ Article créé: ${article.title}`);
     }
 
@@ -48,10 +50,11 @@ async function initDatabase() {
     console.log('   - bob@test.com / password123');
     console.log('   - charlie@test.com / password123');
 
+    process.exit(0);
+
   } catch (error) {
     console.error('❌ Erreur lors de l\'initialisation:', error);
-  } finally {
-    db.close();
+    process.exit(1);
   }
 }
 
