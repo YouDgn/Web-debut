@@ -1,16 +1,24 @@
-const Database = require('better-sqlite3');
+const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 
 const dbPath = process.env.DB_PATH || './database.db';
-const db = new Database(dbPath);
+const db = new sqlite3.Database(dbPath, (err) => {
+  if (err) {
+    console.error('❌ Erreur connexion DB:', err);
+  } else {
+    console.log('✅ Connecté à la base de données SQLite');
+  }
+});
 
 // Activer les foreign keys
-db.pragma('foreign_keys = ON');
+db.run('PRAGMA foreign_keys = ON');
 
-// Créer les tables si elles n'existent pas
+/**
+ * Initialiser la base de données
+ */
 function initDatabase() {
   // Table utilisateurs
-  db.exec(`
+  db.run(`
     CREATE TABLE IF NOT EXISTS users (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       username TEXT UNIQUE NOT NULL,
@@ -21,7 +29,7 @@ function initDatabase() {
   `);
 
   // Table articles
-  db.exec(`
+  db.run(`
     CREATE TABLE IF NOT EXISTS articles (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       title TEXT NOT NULL,
@@ -34,7 +42,7 @@ function initDatabase() {
   `);
 
   // Table images
-  db.exec(`
+  db.run(`
     CREATE TABLE IF NOT EXISTS images (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       article_id INTEGER NOT NULL,
@@ -45,9 +53,37 @@ function initDatabase() {
     )
   `);
 
-  console.log('✅ Base de données initialisée');
+  console.log('✅ Tables créées');
 }
 
 initDatabase();
+
+// Wrapper pour promisifier les requêtes
+db.getAsync = function(sql, params = []) {
+  return new Promise((resolve, reject) => {
+    db.get(sql, params, (err, row) => {
+      if (err) reject(err);
+      else resolve(row);
+    });
+  });
+};
+
+db.allAsync = function(sql, params = []) {
+  return new Promise((resolve, reject) => {
+    db.all(sql, params, (err, rows) => {
+      if (err) reject(err);
+      else resolve(rows);
+    });
+  });
+};
+
+db.runAsync = function(sql, params = []) {
+  return new Promise((resolve, reject) => {
+    db.run(sql, params, function(err) {
+      if (err) reject(err);
+      else resolve({ lastID: this.lastID, changes: this.changes });
+    });
+  });
+};
 
 module.exports = db;
