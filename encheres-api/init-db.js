@@ -6,10 +6,23 @@ async function initDatabase() {
   console.log('🔄 Initialisation de la base de données...');
 
   try {
-    // Supprimer les données existantes
+    // Désactiver temporairement les foreign keys
+    await db.runAsync('PRAGMA foreign_keys = OFF');
+
+    // Supprimer TOUTES les données
     await db.runAsync('DELETE FROM images');
     await db.runAsync('DELETE FROM articles');
     await db.runAsync('DELETE FROM users');
+
+    // Réinitialiser les compteurs auto-increment
+    await db.runAsync('DELETE FROM sqlite_sequence WHERE name="users"');
+    await db.runAsync('DELETE FROM sqlite_sequence WHERE name="articles"');
+    await db.runAsync('DELETE FROM sqlite_sequence WHERE name="images"');
+
+    // Réactiver les foreign keys
+    await db.runAsync('PRAGMA foreign_keys = ON');
+
+    console.log('✅ Tables vidées et compteurs réinitialisés');
 
     // Créer des utilisateurs fictifs
     const users = [
