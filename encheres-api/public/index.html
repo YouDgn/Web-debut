@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>API Enchères - Interface de Test</title>
+  <title>API Enchères - Mode Local (Sans Serveur)</title>
   <style>
     * {
       margin: 0;
@@ -29,6 +29,17 @@
       margin-bottom: 30px;
       font-size: 2.5em;
       text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
+    
+    .alert {
+      background: #fff3cd;
+      border: 2px solid #ffc107;
+      color: #856404;
+      padding: 15px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      text-align: center;
+      font-weight: bold;
     }
     
     .card {
@@ -57,7 +68,7 @@
       color: #333;
     }
     
-    input, textarea {
+    input, textarea, select {
       width: 100%;
       padding: 10px;
       border: 2px solid #ddd;
@@ -66,7 +77,7 @@
       transition: border-color 0.3s;
     }
     
-    input:focus, textarea:focus {
+    input:focus, textarea:focus, select:focus {
       outline: none;
       border-color: #667eea;
     }
@@ -105,6 +116,10 @@
     
     .btn-success {
       background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    }
+    
+    .btn-warning {
+      background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%);
     }
     
     #status {
@@ -153,6 +168,7 @@
       border-radius: 8px;
       margin-bottom: 10px;
       border-left: 4px solid #667eea;
+      position: relative;
     }
     
     .article-item h3 {
@@ -171,10 +187,28 @@
       font-size: 1.2em;
     }
     
-    .grid {
+    .article-actions {
+      margin-top: 10px;
+    }
+    
+    .image-gallery {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 20px;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 10px;
+      margin-top: 10px;
+    }
+    
+    .image-gallery img {
+      width: 100%;
+      height: 150px;
+      object-fit: cover;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    
+    .image-gallery img:hover {
+      transform: scale(1.05);
     }
     
     pre {
@@ -184,14 +218,60 @@
       border-radius: 8px;
       overflow-x: auto;
       font-size: 13px;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+
+    .stat-card {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 20px;
+      border-radius: 10px;
+      text-align: center;
+    }
+
+    .stat-card h3 {
+      font-size: 2em;
+      margin-bottom: 5px;
+    }
+
+    .stat-card p {
+      opacity: 0.9;
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>🎯 API Enchères - Interface de Test</h1>
+    <h1>🎯 API Enchères - Mode Local (Sans Serveur)</h1>
+    
+    <div class="alert">
+      ⚠️ Mode démonstration local - Les données sont stockées dans votre navigateur
+    </div>
     
     <div id="status"></div>
+    
+    <!-- STATISTIQUES -->
+    <div class="stats">
+      <div class="stat-card">
+        <h3 id="statUsers">3</h3>
+        <p>Utilisateurs</p>
+      </div>
+      <div class="stat-card">
+        <h3 id="statArticles">0</h3>
+        <p>Articles</p>
+      </div>
+      <div class="stat-card">
+        <h3 id="statImages">0</h3>
+        <p>Images</p>
+      </div>
+    </div>
     
     <!-- SECTION AUTHENTIFICATION -->
     <div class="card" id="authSection">
@@ -199,8 +279,13 @@
       
       <div id="loginForm">
         <div class="form-group">
-          <label>Email :</label>
-          <input type="email" id="loginEmail" placeholder="alice@test.com" value="alice@test.com">
+          <label>Sélectionner un utilisateur :</label>
+          <select id="userSelect">
+            <option value="">-- Choisir --</option>
+            <option value="alice@test.com">Alice (alice@test.com)</option>
+            <option value="bob@test.com">Bob (bob@test.com)</option>
+            <option value="charlie@test.com">Charlie (charlie@test.com)</option>
+          </select>
         </div>
         
         <div class="form-group">
@@ -214,7 +299,9 @@
       <div id="userInfo" class="user-info hidden">
         <p><strong>Connecté en tant que :</strong> <span id="userName"></span></p>
         <p><strong>Email :</strong> <span id="userEmail"></span></p>
+        <p><strong>ID :</strong> <span id="userId"></span></p>
         <button class="btn-danger" onclick="logout()">Se déconnecter</button>
+        <button class="btn-warning" onclick="resetDatabase()">Réinitialiser la BDD</button>
       </div>
     </div>
     
@@ -278,22 +365,70 @@
       <div id="imagesList" style="margin-top: 20px;"></div>
     </div>
     
-    <!-- SECTION RÉPONSE API -->
+    <!-- SECTION DONNÉES -->
     <div class="card">
-      <h2>📡 Dernière réponse de l'API</h2>
-      <pre id="apiResponse">Aucune requête effectuée</pre>
+      <h2>💾 Données en mémoire</h2>
+      <button class="btn-success" onclick="showAllData()">Afficher toutes les données</button>
+      <pre id="dataDisplay">Cliquez sur le bouton pour voir les données</pre>
+    </div>
+    
+    <!-- SECTION LOGS -->
+    <div class="card">
+      <h2>📡 Journal d'activité</h2>
+      <button class="btn-warning" onclick="clearLogs()">Effacer les logs</button>
+      <pre id="logs">Aucune activité</pre>
     </div>
   </div>
 
   <script>
-    // URL de base de l'API
-    const API_URL = 'http://localhost:3000/api';
+    // ====================
+    // BASE DE DONNÉES LOCALE
+    // ====================
     
-    // Token stocké en mémoire
-    let authToken = null;
+    // Initialiser la base de données locale
+    function initDatabase() {
+      if (!localStorage.getItem('users')) {
+        const users = [
+          { id: 1, username: 'alice', email: 'alice@test.com', password: 'password123' },
+          { id: 2, username: 'bob', email: 'bob@test.com', password: 'password123' },
+          { id: 3, username: 'charlie', email: 'charlie@test.com', password: 'password123' }
+        ];
+        localStorage.setItem('users', JSON.stringify(users));
+      }
+      
+      if (!localStorage.getItem('articles')) {
+        localStorage.setItem('articles', JSON.stringify([]));
+      }
+      
+      if (!localStorage.getItem('images')) {
+        localStorage.setItem('images', JSON.stringify([]));
+      }
+      
+      if (!localStorage.getItem('logs')) {
+        localStorage.setItem('logs', JSON.stringify([]));
+      }
+      
+      updateStats();
+    }
+    
+    // Réinitialiser la base de données
+    function resetDatabase() {
+      if (confirm('⚠️ Voulez-vous vraiment supprimer toutes les données ?')) {
+        localStorage.removeItem('articles');
+        localStorage.removeItem('images');
+        localStorage.setItem('articles', JSON.stringify([]));
+        localStorage.setItem('images', JSON.stringify([]));
+        addLog('🔄 Base de données réinitialisée');
+        showStatus('✅ Base de données réinitialisée', 'success');
+        getAllArticles();
+        updateStats();
+      }
+    }
+    
+    // Variables globales
     let currentUser = null;
     
-    // Fonction pour afficher les messages de statut
+    // Fonction pour afficher les messages
     function showStatus(message, type = 'info') {
       const status = document.getElementById('status');
       status.textContent = message;
@@ -303,167 +438,174 @@
       }, 5000);
     }
     
-    // Fonction pour afficher la réponse API
-    function showApiResponse(data) {
-      document.getElementById('apiResponse').textContent = JSON.stringify(data, null, 2);
+    // Ajouter un log
+    function addLog(message) {
+      const logs = JSON.parse(localStorage.getItem('logs') || '[]');
+      const timestamp = new Date().toLocaleString('fr-FR');
+      logs.unshift(`[${timestamp}] ${message}`);
+      if (logs.length > 50) logs.pop(); // Garder max 50 logs
+      localStorage.setItem('logs', JSON.stringify(logs));
+      updateLogs();
     }
     
-    // CONNEXION
-    async function login() {
-      const email = document.getElementById('loginEmail').value;
+    // Mettre à jour l'affichage des logs
+    function updateLogs() {
+      const logs = JSON.parse(localStorage.getItem('logs') || '[]');
+      document.getElementById('logs').textContent = logs.length > 0 
+        ? logs.join('\n') 
+        : 'Aucune activité';
+    }
+    
+    // Effacer les logs
+    function clearLogs() {
+      localStorage.setItem('logs', JSON.stringify([]));
+      updateLogs();
+      showStatus('🗑️ Logs effacés', 'info');
+    }
+    
+    // Mettre à jour les statistiques
+    function updateStats() {
+      const users = JSON.parse(localStorage.getItem('users') || '[]');
+      const articles = JSON.parse(localStorage.getItem('articles') || '[]');
+      const images = JSON.parse(localStorage.getItem('images') || '[]');
+      
+      document.getElementById('statUsers').textContent = users.length;
+      document.getElementById('statArticles').textContent = articles.length;
+      document.getElementById('statImages').textContent = images.length;
+    }
+    
+    // Afficher toutes les données
+    function showAllData() {
+      const data = {
+        users: JSON.parse(localStorage.getItem('users') || '[]'),
+        articles: JSON.parse(localStorage.getItem('articles') || '[]'),
+        images: JSON.parse(localStorage.getItem('images') || '[]')
+      };
+      document.getElementById('dataDisplay').textContent = JSON.stringify(data, null, 2);
+    }
+    
+    // ====================
+    // AUTHENTIFICATION
+    // ====================
+    
+    function login() {
+      const email = document.getElementById('userSelect').value;
       const password = document.getElementById('loginPassword').value;
       
-      try {
-        const response = await fetch(`${API_URL}/auth/login`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ email, password })
-        });
-        
-        const data = await response.json();
-        showApiResponse(data);
-        
-        if (response.ok) {
-          authToken = data.token;
-          currentUser = data.user;
-          
-          // Afficher les infos utilisateur
-          document.getElementById('userName').textContent = currentUser.username;
-          document.getElementById('userEmail').textContent = currentUser.email;
-          
-          // Masquer le formulaire de connexion
-          document.getElementById('loginForm').classList.add('hidden');
-          document.getElementById('userInfo').classList.remove('hidden');
-          
-          // Afficher les sections protégées
-          document.getElementById('articlesSection').classList.remove('hidden');
-          document.getElementById('imagesSection').classList.remove('hidden');
-          
-          showStatus('✅ Connexion réussie !', 'success');
-        } else {
-          showStatus('❌ ' + data.error, 'error');
-        }
-      } catch (error) {
-        showStatus('❌ Erreur : ' + error.message, 'error');
-        showApiResponse({ error: error.message });
+      if (!email) {
+        showStatus('⚠️ Veuillez sélectionner un utilisateur', 'error');
+        return;
       }
+      
+      const users = JSON.parse(localStorage.getItem('users'));
+      const user = users.find(u => u.email === email);
+      
+      if (!user) {
+        showStatus('❌ Utilisateur non trouvé', 'error');
+        addLog(`❌ Tentative de connexion échouée : ${email}`);
+        return;
+      }
+      
+      if (user.password !== password) {
+        showStatus('❌ Mot de passe incorrect', 'error');
+        addLog(`❌ Mot de passe incorrect pour : ${email}`);
+        return;
+      }
+      
+      currentUser = user;
+      
+      document.getElementById('userName').textContent = user.username;
+      document.getElementById('userEmail').textContent = user.email;
+      document.getElementById('userId').textContent = user.id;
+      
+      document.getElementById('loginForm').classList.add('hidden');
+      document.getElementById('userInfo').classList.remove('hidden');
+      document.getElementById('articlesSection').classList.remove('hidden');
+      document.getElementById('imagesSection').classList.remove('hidden');
+      
+      showStatus(`✅ Connecté en tant que ${user.username}`, 'success');
+      addLog(`✅ Connexion réussie : ${user.username} (${user.email})`);
+      
+      getAllArticles();
     }
     
-    // DÉCONNEXION
     function logout() {
-      authToken = null;
+      addLog(`👋 Déconnexion de ${currentUser.username}`);
       currentUser = null;
       
-      // Réafficher le formulaire de connexion
       document.getElementById('loginForm').classList.remove('hidden');
       document.getElementById('userInfo').classList.add('hidden');
-      
-      // Masquer les sections protégées
       document.getElementById('articlesSection').classList.add('hidden');
       document.getElementById('imagesSection').classList.add('hidden');
       
-      // Vider les listes
       document.getElementById('articlesList').innerHTML = '';
       document.getElementById('imagesList').innerHTML = '';
       
       showStatus('👋 Déconnexion réussie', 'info');
-      showApiResponse({ message: 'Déconnecté' });
     }
     
-    // CRÉER UN ARTICLE
-    async function createArticle() {
-      const title = document.getElementById('articleTitle').value;
-      const description = document.getElementById('articleDescription').value;
-      const prix_depart = document.getElementById('articlePrice').value;
+    // ====================
+    // GESTION DES ARTICLES
+    // ====================
+    
+    function createArticle() {
+      const title = document.getElementById('articleTitle').value.trim();
+      const description = document.getElementById('articleDescription').value.trim();
+      const prix_depart = parseFloat(document.getElementById('articlePrice').value);
       
-      if (!title || !description || !prix_depart) {
-        showStatus('⚠️ Veuillez remplir tous les champs', 'error');
+      if (!title || title.length < 3) {
+        showStatus('⚠️ Le titre doit contenir au moins 3 caractères', 'error');
         return;
       }
       
-      try {
-        const response = await fetch(`${API_URL}/articles`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${authToken}`
-          },
-          body: JSON.stringify({ title, description, prix_depart: parseFloat(prix_depart) })
-        });
-        
-        const data = await response.json();
-        showApiResponse(data);
-        
-        if (response.ok) {
-          showStatus('✅ Article créé avec succès !', 'success');
-          
-          // Vider les champs
-          document.getElementById('articleTitle').value = '';
-          document.getElementById('articleDescription').value = '';
-          document.getElementById('articlePrice').value = '';
-          
-          // Rafraîchir la liste
-          getAllArticles();
-        } else {
-          showStatus('❌ ' + data.error, 'error');
-        }
-      } catch (error) {
-        showStatus('❌ Erreur : ' + error.message, 'error');
-        showApiResponse({ error: error.message });
+      if (!description || description.length < 10) {
+        showStatus('⚠️ La description doit contenir au moins 10 caractères', 'error');
+        return;
       }
+      
+      if (!prix_depart || prix_depart <= 0) {
+        showStatus('⚠️ Le prix doit être supérieur à 0', 'error');
+        return;
+      }
+      
+      const articles = JSON.parse(localStorage.getItem('articles'));
+      const newArticle = {
+        id: articles.length > 0 ? Math.max(...articles.map(a => a.id)) + 1 : 1,
+        title,
+        description,
+        prix_depart,
+        user_id: currentUser.id,
+        author: currentUser.username,
+        created_at: new Date().toISOString()
+      };
+      
+      articles.push(newArticle);
+      localStorage.setItem('articles', JSON.stringify(articles));
+      
+      document.getElementById('articleTitle').value = '';
+      document.getElementById('articleDescription').value = '';
+      document.getElementById('articlePrice').value = '';
+      
+      showStatus(`✅ Article "${title}" créé avec succès !`, 'success');
+      addLog(`📦 Article créé : "${title}" par ${currentUser.username}`);
+      
+      getAllArticles();
+      updateStats();
     }
     
-    // RÉCUPÉRER TOUS LES ARTICLES
-    async function getAllArticles() {
-      try {
-        const response = await fetch(`${API_URL}/articles`, {
-          headers: {
-            'Authorization': `Bearer ${authToken}`
-          }
-        });
-        
-        const data = await response.json();
-        showApiResponse(data);
-        
-        if (response.ok) {
-          displayArticles(data.articles);
-          showStatus(`📦 ${data.articles.length} article(s) trouvé(s)`, 'success');
-        } else {
-          showStatus('❌ ' + data.error, 'error');
-        }
-      } catch (error) {
-        showStatus('❌ Erreur : ' + error.message, 'error');
-        showApiResponse({ error: error.message });
-      }
+    function getAllArticles() {
+      const articles = JSON.parse(localStorage.getItem('articles'));
+      displayArticles(articles);
+      addLog(`📋 Affichage de ${articles.length} article(s)`);
     }
     
-    // RÉCUPÉRER MES ARTICLES
-    async function getMyArticles() {
-      try {
-        const response = await fetch(`${API_URL}/articles/my`, {
-          headers: {
-            'Authorization': `Bearer ${authToken}`
-          }
-        });
-        
-        const data = await response.json();
-        showApiResponse(data);
-        
-        if (response.ok) {
-          displayArticles(data.articles);
-          showStatus(`📦 ${data.articles.length} de vos article(s)`, 'success');
-        } else {
-          showStatus('❌ ' + data.error, 'error');
-        }
-      } catch (error) {
-        showStatus('❌ Erreur : ' + error.message, 'error');
-        showApiResponse({ error: error.message });
-      }
+    function getMyArticles() {
+      const articles = JSON.parse(localStorage.getItem('articles'));
+      const myArticles = articles.filter(a => a.user_id === currentUser.id);
+      displayArticles(myArticles);
+      addLog(`📋 Affichage de ${myArticles.length} article(s) de ${currentUser.username}`);
     }
     
-    // AFFICHER LES ARTICLES
     function displayArticles(articles) {
       const container = document.getElementById('articlesList');
       
@@ -472,89 +614,140 @@
         return;
       }
       
-      container.innerHTML = articles.map(article => `
-        <div class="article-item">
-          <h3>${article.title}</h3>
-          <p>${article.description}</p>
-          <p class="price">Prix de départ : ${article.prix_depart} €</p>
-          <p style="font-size: 0.9em; color: #999;">
-            Auteur : ${article.author || 'Inconnu'} | 
-            ID : ${article.id} |
-            Créé le : ${new Date(article.created_at).toLocaleDateString('fr-FR')}
-          </p>
-        </div>
-      `).join('');
+      container.innerHTML = articles.map(article => {
+        const images = JSON.parse(localStorage.getItem('images')).filter(img => img.article_id === article.id);
+        const isMine = currentUser && article.user_id === currentUser.id;
+        
+        return `
+          <div class="article-item">
+            <h3>${article.title}</h3>
+            <p>${article.description}</p>
+            <p class="price">Prix de départ : ${article.prix_depart} €</p>
+            <p style="font-size: 0.9em; color: #999;">
+              Auteur : ${article.author} | 
+              ID : ${article.id} |
+              Créé le : ${new Date(article.created_at).toLocaleDateString('fr-FR')}
+            </p>
+            ${images.length > 0 ? `<p>🖼️ ${images.length} image(s)</p>` : ''}
+            ${isMine ? `
+              <div class="article-actions">
+                <button class="btn-danger" onclick="deleteArticle(${article.id})">Supprimer</button>
+              </div>
+            ` : ''}
+          </div>
+        `;
+      }).join('');
     }
     
-    // UPLOADER UNE IMAGE
-    async function uploadImage() {
-      const articleId = document.getElementById('imageArticleId').value;
-      const fileInput = document.getElementById('imageFile');
+    function deleteArticle(articleId) {
+      if (!confirm('Voulez-vous vraiment supprimer cet article ?')) return;
       
-      if (!articleId || !fileInput.files[0]) {
-        showStatus('⚠️ Veuillez sélectionner un article et une image', 'error');
+      let articles = JSON.parse(localStorage.getItem('articles'));
+      const article = articles.find(a => a.id === articleId);
+      
+      if (!article) {
+        showStatus('❌ Article non trouvé', 'error');
         return;
       }
       
-      const formData = new FormData();
-      formData.append('image', fileInput.files[0]);
-      
-      try {
-        const response = await fetch(`${API_URL}/images/article/${articleId}`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${authToken}`
-          },
-          body: formData
-        });
-        
-        const data = await response.json();
-        showApiResponse(data);
-        
-        if (response.ok) {
-          showStatus('✅ Image uploadée avec succès !', 'success');
-          fileInput.value = '';
-        } else {
-          showStatus('❌ ' + data.error, 'error');
-        }
-      } catch (error) {
-        showStatus('❌ Erreur : ' + error.message, 'error');
-        showApiResponse({ error: error.message });
+      if (article.user_id !== currentUser.id) {
+        showStatus('❌ Vous n\'êtes pas autorisé à supprimer cet article', 'error');
+        return;
       }
+      
+      // Supprimer l'article
+      articles = articles.filter(a => a.id !== articleId);
+      localStorage.setItem('articles', JSON.stringify(articles));
+      
+      // Supprimer les images associées
+      let images = JSON.parse(localStorage.getItem('images'));
+      images = images.filter(img => img.article_id !== articleId);
+      localStorage.setItem('images', JSON.stringify(images));
+      
+      showStatus('✅ Article supprimé', 'success');
+      addLog(`🗑️ Article supprimé : "${article.title}"`);
+      
+      getAllArticles();
+      updateStats();
     }
     
-    // RÉCUPÉRER LES IMAGES D'UN ARTICLE
-    async function getArticleImages() {
-      const articleId = document.getElementById('viewImageArticleId').value;
+    // ====================
+    // GESTION DES IMAGES
+    // ====================
+    
+    function uploadImage() {
+      const articleId = parseInt(document.getElementById('imageArticleId').value);
+      const fileInput = document.getElementById('imageFile');
       
       if (!articleId) {
         showStatus('⚠️ Veuillez entrer un ID d\'article', 'error');
         return;
       }
       
-      try {
-        const response = await fetch(`${API_URL}/images/article/${articleId}`, {
-          headers: {
-            'Authorization': `Bearer ${authToken}`
-          }
-        });
-        
-        const data = await response.json();
-        showApiResponse(data);
-        
-        if (response.ok) {
-          displayImages(data.images);
-          showStatus(`🖼️ ${data.images.length} image(s) trouvée(s)`, 'success');
-        } else {
-          showStatus('❌ ' + data.error, 'error');
-        }
-      } catch (error) {
-        showStatus('❌ Erreur : ' + error.message, 'error');
-        showApiResponse({ error: error.message });
+      if (!fileInput.files[0]) {
+        showStatus('⚠️ Veuillez sélectionner une image', 'error');
+        return;
       }
+      
+      const articles = JSON.parse(localStorage.getItem('articles'));
+      const article = articles.find(a => a.id === articleId);
+      
+      if (!article) {
+        showStatus('❌ Article non trouvé', 'error');
+        return;
+      }
+      
+      if (article.user_id !== currentUser.id) {
+        showStatus('❌ Seul le propriétaire peut ajouter des images', 'error');
+        return;
+      }
+      
+      const file = fileInput.files[0];
+      const reader = new FileReader();
+      
+      reader.onload = function(e) {
+        const images = JSON.parse(localStorage.getItem('images'));
+        const newImage = {
+          id: images.length > 0 ? Math.max(...images.map(img => img.id)) + 1 : 1,
+          article_id: articleId,
+          filename: file.name,
+          data: e.target.result,
+          uploaded_at: new Date().toISOString()
+        };
+        
+        images.push(newImage);
+        localStorage.setItem('images', JSON.stringify(images));
+        
+        fileInput.value = '';
+        showStatus(`✅ Image "${file.name}" uploadée avec succès !`, 'success');
+        addLog(`🖼️ Image uploadée : "${file.name}" pour l'article #${articleId}`);
+        updateStats();
+      };
+      
+      reader.readAsDataURL(file);
     }
     
-    // AFFICHER LES IMAGES
+    function getArticleImages() {
+      const articleId = parseInt(document.getElementById('viewImageArticleId').value);
+      
+      if (!articleId) {
+        showStatus('⚠️ Veuillez entrer un ID d\'article', 'error');
+        return;
+      }
+      
+      const articles = JSON.parse(localStorage.getItem('articles'));
+      const article = articles.find(a => a.id === articleId);
+      
+      if (!article) {
+        showStatus('❌ Article non trouvé', 'error');
+        return;
+      }
+      
+      const images = JSON.parse(localStorage.getItem('images')).filter(img => img.article_id === articleId);
+      displayImages(images);
+      addLog(`🖼️ Affichage de ${images.length} image(s) de l'article #${articleId}`);
+    }
+    
     function displayImages(images) {
       const container = document.getElementById('imagesList');
       
@@ -563,15 +756,33 @@
         return;
       }
       
-      container.innerHTML = images.map(image => `
-        <div class="article-item">
-          <img src="${image.url}" alt="${image.filename}" style="max-width: 300px; border-radius: 8px; margin-bottom: 10px;">
-          <p><strong>Fichier :</strong> ${image.filename}</p>
-          <p><strong>ID :</strong> ${image.id}</p>
-          <p><strong>Uploadé le :</strong> ${new Date(image.uploaded_at).toLocaleDateString('fr-FR')}</p>
+      container.innerHTML = `
+        <div class="image-gallery">
+          ${images.map(image => `
+            <div>
+              <img src="${image.data}" alt="${image.filename}" onclick="viewImageFullscreen('${image.data}')">
+              <p style="font-size: 0.8em; color: #999; margin-top: 5px;">${image.filename}</p>
+            </div>
+          `).join('')}
         </div>
-      `).join('');
+      `;
     }
+    
+    function viewImageFullscreen(dataUrl) {
+      const win = window.open('', '_blank');
+      win.document.write(`<img src="${dataUrl}" style="max-width: 100%; height: auto;">`);
+    }
+    
+    // ====================
+    // INITIALISATION
+    // ====================
+    
+    // Initialiser au chargement de la page
+    window.onload = function() {
+      initDatabase();
+      updateLogs();
+      addLog('🚀 Application démarrée en mode local');
+    };
   </script>
 </body>
 </html>
