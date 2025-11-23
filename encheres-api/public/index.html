@@ -56,6 +56,12 @@
       border-bottom: 3px solid #667eea;
       padding-bottom: 10px;
     }
+
+    .card h3 {
+      color: #333;
+      margin-top: 20px;
+      margin-bottom: 10px;
+    }
     
     .form-group {
       margin-bottom: 15px;
@@ -159,7 +165,7 @@
     }
     
     .hidden {
-      display: none;
+      display: none !important;
     }
     
     .article-item {
@@ -174,6 +180,7 @@
     .article-item h3 {
       color: #333;
       margin-bottom: 8px;
+      margin-top: 0;
     }
     
     .article-item p {
@@ -240,10 +247,18 @@
     .stat-card h3 {
       font-size: 2em;
       margin-bottom: 5px;
+      color: white;
+      margin-top: 0;
     }
 
     .stat-card p {
       opacity: 0.9;
+    }
+
+    hr {
+      margin: 30px 0;
+      border: none;
+      border-top: 2px solid #eee;
     }
   </style>
 </head>
@@ -324,10 +339,15 @@
         <label>Prix de départ (€) :</label>
         <input type="number" id="articlePrice" placeholder="100" min="0" step="0.01">
       </div>
+
+      <div class="form-group">
+        <label>Image de l'article (optionnel) :</label>
+        <input type="file" id="articleImage" accept="image/*">
+      </div>
       
       <button onclick="createArticle()">Créer l'article</button>
       
-      <hr style="margin: 30px 0; border: none; border-top: 2px solid #eee;">
+      <hr>
       
       <h3>Liste des articles</h3>
       <button class="btn-success" onclick="getAllArticles()">Afficher tous les articles</button>
@@ -352,7 +372,7 @@
       
       <button onclick="uploadImage()">Uploader l'image</button>
       
-      <hr style="margin: 30px 0; border: none; border-top: 2px solid #eee;">
+      <hr>
       
       <h3>Voir les images d'un article</h3>
       <div class="form-group">
@@ -413,14 +433,13 @@
     
     // Réinitialiser la base de données
     function resetDatabase() {
-      if (confirm('⚠️ Voulez-vous vraiment supprimer toutes les données ?')) {
-        localStorage.removeItem('articles');
-        localStorage.removeItem('images');
+      if (confirm('⚠️ Voulez-vous vraiment supprimer tous les articles et images ?')) {
         localStorage.setItem('articles', JSON.stringify([]));
         localStorage.setItem('images', JSON.stringify([]));
         addLog('🔄 Base de données réinitialisée');
         showStatus('✅ Base de données réinitialisée', 'success');
-        getAllArticles();
+        document.getElementById('articlesList').innerHTML = '';
+        document.getElementById('imagesList').innerHTML = '';
         updateStats();
       }
     }
@@ -433,6 +452,7 @@
       const status = document.getElementById('status');
       status.textContent = message;
       status.className = type;
+      status.style.display = 'block';
       setTimeout(() => {
         status.style.display = 'none';
       }, 5000);
@@ -443,7 +463,7 @@
       const logs = JSON.parse(localStorage.getItem('logs') || '[]');
       const timestamp = new Date().toLocaleString('fr-FR');
       logs.unshift(`[${timestamp}] ${message}`);
-      if (logs.length > 50) logs.pop(); // Garder max 50 logs
+      if (logs.length > 50) logs.pop();
       localStorage.setItem('logs', JSON.stringify(logs));
       updateLogs();
     }
@@ -477,9 +497,9 @@
     // Afficher toutes les données
     function showAllData() {
       const data = {
-        users: JSON.parse(localStorage.getItem('users') || '[]'),
+        users: JSON.parse(localStorage.getItem('users') || '[]').map(u => ({...u, password: '***'})),
         articles: JSON.parse(localStorage.getItem('articles') || '[]'),
-        images: JSON.parse(localStorage.getItem('images') || '[]')
+        images: JSON.parse(localStorage.getItem('images') || '[]').map(img => ({...img, data: '[BASE64_DATA]'}))
       };
       document.getElementById('dataDisplay').textContent = JSON.stringify(data, null, 2);
     }
@@ -552,7 +572,9 @@
       const title = document.getElementById('articleTitle').value.trim();
       const description = document.getElementById('articleDescription').value.trim();
       const prix_depart = parseFloat(document.getElementById('articlePrice').value);
+      const imageInput = document.getElementById('articleImage');
       
+      // Validation
       if (!title || title.length < 3) {
         showStatus('⚠️ Le titre doit contenir au moins 3 caractères', 'error');
         return;
@@ -582,35 +604,68 @@
       articles.push(newArticle);
       localStorage.setItem('articles', JSON.stringify(articles));
       
+      // Si une image est sélectionnée, l'uploader
+      if (imageInput.files && imageInput.files[0]) {
+        const file = imageInput.files[0];
+        const reader = new FileReader();
+        
+        reader.onload = function(e) {
+          const images = JSON.parse(localStorage.getItem('images'));
+          const newImage = {
+            id: images.length > 0 ? Math.max(...images.map(img => img.id)) + 1 : 1,
+            article_id: newArticle.id,
+            filename: file.name,
+            data: e.target.result,
+            uploaded_at: new Date().toISOString()
+          };
+          
+          images.push(newImage);
+          localStorage.setItem('images', JSON.stringify(images));
+          
+          showStatus(`✅ Article "${title}" créé avec image !`, 'success');
+          addLog(`📦 Article créé : "${title}" avec image par ${currentUser.username}`);
+          updateStats();
+        };
+        
+        reader.readAsDataURL(file);
+      } else {
+        showStatus(`✅ Article "${title}" créé avec succès !`, 'success');
+        addLog(`📦 Article créé : "${title}" par ${currentUser.username}`);
+      }
+      
+      // Vider les champs
       document.getElementById('articleTitle').value = '';
       document.getElementById('articleDescription').value = '';
       document.getElementById('articlePrice').value = '';
+      document.getElementById('articleImage').value = '';
       
-      showStatus(`✅ Article "${title}" créé avec succès !`, 'success');
-      addLog(`📦 Article créé : "${title}" par ${currentUser.username}`);
-      
-      getAllArticles();
-      updateStats();
+      // Rafraîchir l'affichage
+      setTimeout(() => {
+        getAllArticles();
+        updateStats();
+      }, 100);
     }
     
     function getAllArticles() {
-      const articles = JSON.parse(localStorage.getItem('articles'));
+      const articles = JSON.parse(localStorage.getItem('articles') || '[]');
       displayArticles(articles);
       addLog(`📋 Affichage de ${articles.length} article(s)`);
+      showStatus(`📦 ${articles.length} article(s) trouvé(s)`, 'info');
     }
     
     function getMyArticles() {
-      const articles = JSON.parse(localStorage.getItem('articles'));
+      const articles = JSON.parse(localStorage.getItem('articles') || '[]');
       const myArticles = articles.filter(a => a.user_id === currentUser.id);
       displayArticles(myArticles);
       addLog(`📋 Affichage de ${myArticles.length} article(s) de ${currentUser.username}`);
+      showStatus(`📦 ${myArticles.length} de vos article(s)`, 'info');
     }
     
     function displayArticles(articles) {
       const container = document.getElementById('articlesList');
       
       if (articles.length === 0) {
-        container.innerHTML = '<p style="color: #999;">Aucun article trouvé</p>';
+        container.innerHTML = '<p style="color: #999; padding: 20px; text-align: center;">Aucun article trouvé</p>';
         return;
       }
       
@@ -622,13 +677,20 @@
           <div class="article-item">
             <h3>${article.title}</h3>
             <p>${article.description}</p>
-            <p class="price">Prix de départ : ${article.prix_depart} €</p>
+            <p class="price">Prix de départ : ${article.prix_depart.toFixed(2)} €</p>
             <p style="font-size: 0.9em; color: #999;">
               Auteur : ${article.author} | 
               ID : ${article.id} |
               Créé le : ${new Date(article.created_at).toLocaleDateString('fr-FR')}
             </p>
-            ${images.length > 0 ? `<p>🖼️ ${images.length} image(s)</p>` : ''}
+            ${images.length > 0 ? `
+              <div class="image-gallery" style="margin-top: 10px;">
+                ${images.map(img => `
+                  <img src="${img.data}" alt="${img.filename}" title="${img.filename}" onclick="viewImageFullscreen('${img.data}')">
+                `).join('')}
+              </div>
+              <p style="font-size: 0.9em; color: #28a745; margin-top: 5px;">🖼️ ${images.length} image(s)</p>
+            ` : '<p style="font-size: 0.9em; color: #999;">Aucune image</p>'}
             ${isMine ? `
               <div class="article-actions">
                 <button class="btn-danger" onclick="deleteArticle(${article.id})">Supprimer</button>
@@ -684,7 +746,7 @@
         return;
       }
       
-      if (!fileInput.files[0]) {
+      if (!fileInput.files || !fileInput.files[0]) {
         showStatus('⚠️ Veuillez sélectionner une image', 'error');
         return;
       }
@@ -722,6 +784,7 @@
         showStatus(`✅ Image "${file.name}" uploadée avec succès !`, 'success');
         addLog(`🖼️ Image uploadée : "${file.name}" pour l'article #${articleId}`);
         updateStats();
+        getAllArticles(); // Rafraîchir pour montrer l'image
       };
       
       reader.readAsDataURL(file);
@@ -744,33 +807,61 @@
       }
       
       const images = JSON.parse(localStorage.getItem('images')).filter(img => img.article_id === articleId);
-      displayImages(images);
+      displayImages(images, article);
       addLog(`🖼️ Affichage de ${images.length} image(s) de l'article #${articleId}`);
     }
     
-    function displayImages(images) {
+    function displayImages(images, article) {
       const container = document.getElementById('imagesList');
       
       if (images.length === 0) {
-        container.innerHTML = '<p style="color: #999;">Aucune image trouvée</p>';
+        container.innerHTML = '<p style="color: #999; padding: 20px; text-align: center;">Aucune image trouvée pour cet article</p>';
         return;
       }
       
       container.innerHTML = `
-        <div class="image-gallery">
-          ${images.map(image => `
-            <div>
-              <img src="${image.data}" alt="${image.filename}" onclick="viewImageFullscreen('${image.data}')">
-              <p style="font-size: 0.8em; color: #999; margin-top: 5px;">${image.filename}</p>
-            </div>
-          `).join('')}
+        <div class="article-item">
+          <h3>Images de l'article : ${article.title}</h3>
+          <div class="image-gallery">
+            ${images.map(image => `
+              <div>
+                <img src="${image.data}" alt="${image.filename}" onclick="viewImageFullscreen('${image.data}')">
+                <p style="font-size: 0.8em; color: #999; margin-top: 5px; text-align: center;">${image.filename}</p>
+              </div>
+            `).join('')}
+          </div>
         </div>
-      `;
-    }
+        `;}
     
     function viewImageFullscreen(dataUrl) {
       const win = window.open('', '_blank');
-      win.document.write(`<img src="${dataUrl}" style="max-width: 100%; height: auto;">`);
+      win.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Image en plein écran</title>
+          <style>
+            body {
+              margin: 0;
+              padding: 20px;
+              background: #000;
+              display: flex;
+              justify-content: center;
+              align-items: center;
+              min-height: 100vh;
+            }
+            img {
+              max-width: 100%;
+              max-height: 100vh;
+              object-fit: contain;
+            }
+          </style>
+        </head>
+        <body>
+          <img src="${dataUrl}" alt="Image">
+        </body>
+        </html>
+      `);
     }
     
     // ====================
@@ -782,6 +873,7 @@
       initDatabase();
       updateLogs();
       addLog('🚀 Application démarrée en mode local');
+      console.log('✅ Application chargée avec succès');
     };
   </script>
 </body>
