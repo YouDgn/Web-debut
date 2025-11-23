@@ -3,87 +3,575 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>API Enchères - Test</title>
+  <title>API Enchères - Interface de Test</title>
   <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
     body {
-      font-family: Arial, sans-serif;
-      max-width: 800px;
-      margin: 50px auto;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
       padding: 20px;
-      background: #f5f5f5;
     }
+    
     .container {
-      background: white;
-      padding: 30px;
-      border-radius: 10px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      max-width: 1200px;
+      margin: 0 auto;
     }
-    h1 { color: #333; }
-    .endpoint {
+    
+    h1 {
+      color: white;
+      text-align: center;
+      margin-bottom: 30px;
+      font-size: 2.5em;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
+    
+    .card {
+      background: white;
+      border-radius: 15px;
+      padding: 25px;
+      margin-bottom: 20px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+    
+    .card h2 {
+      color: #667eea;
+      margin-bottom: 15px;
+      border-bottom: 3px solid #667eea;
+      padding-bottom: 10px;
+    }
+    
+    .form-group {
+      margin-bottom: 15px;
+    }
+    
+    label {
+      display: block;
+      font-weight: bold;
+      margin-bottom: 5px;
+      color: #333;
+    }
+    
+    input, textarea {
+      width: 100%;
+      padding: 10px;
+      border: 2px solid #ddd;
+      border-radius: 8px;
+      font-size: 14px;
+      transition: border-color 0.3s;
+    }
+    
+    input:focus, textarea:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+    
+    textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+    
+    button {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      padding: 12px 25px;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      margin-right: 10px;
+      margin-top: 10px;
+    }
+    
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+    }
+    
+    button:active {
+      transform: translateY(0);
+    }
+    
+    .btn-danger {
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    }
+    
+    .btn-success {
+      background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    }
+    
+    #status {
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      font-weight: bold;
+      display: none;
+    }
+    
+    #status.success {
+      background: #d4edda;
+      color: #155724;
+      border: 2px solid #c3e6cb;
+      display: block;
+    }
+    
+    #status.error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 2px solid #f5c6cb;
+      display: block;
+    }
+    
+    #status.info {
+      background: #d1ecf1;
+      color: #0c5460;
+      border: 2px solid #bee5eb;
+      display: block;
+    }
+    
+    .user-info {
       background: #f8f9fa;
       padding: 15px;
-      margin: 10px 0;
-      border-left: 4px solid #007bff;
-      border-radius: 4px;
+      border-radius: 8px;
+      margin-bottom: 15px;
     }
-    .method {
-      display: inline-block;
-      padding: 3px 8px;
-      border-radius: 3px;
+    
+    .hidden {
+      display: none;
+    }
+    
+    .article-item {
+      background: #f8f9fa;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 10px;
+      border-left: 4px solid #667eea;
+    }
+    
+    .article-item h3 {
+      color: #333;
+      margin-bottom: 8px;
+    }
+    
+    .article-item p {
+      color: #666;
+      margin-bottom: 5px;
+    }
+    
+    .article-item .price {
+      color: #28a745;
       font-weight: bold;
-      font-size: 12px;
-      margin-right: 10px;
+      font-size: 1.2em;
     }
-    .get { background: #28a745; color: white; }
-    .post { background: #007bff; color: white; }
-    code {
-      background: #e9ecef;
-      padding: 2px 6px;
-      border-radius: 3px;
-      font-family: 'Courier New', monospace;
+    
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+    }
+    
+    pre {
+      background: #2d3748;
+      color: #68d391;
+      padding: 15px;
+      border-radius: 8px;
+      overflow-x: auto;
+      font-size: 13px;
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>🎯 API Enchères</h1>
-    <p>Bienvenue sur l'API du site d'enchères.</p>
+    <h1>🎯 API Enchères - Interface de Test</h1>
     
-    <h2>📚 Endpoints disponibles</h2>
+    <div id="status"></div>
     
-    <div class="endpoint">
-      <span class="method post">POST</span>
-      <code>/api/auth/login</code>
-      <p>Connexion utilisateur</p>
+    <!-- SECTION AUTHENTIFICATION -->
+    <div class="card" id="authSection">
+      <h2>🔐 Authentification</h2>
+      
+      <div id="loginForm">
+        <div class="form-group">
+          <label>Email :</label>
+          <input type="email" id="loginEmail" placeholder="alice@test.com" value="alice@test.com">
+        </div>
+        
+        <div class="form-group">
+          <label>Mot de passe :</label>
+          <input type="password" id="loginPassword" placeholder="password123" value="password123">
+        </div>
+        
+        <button onclick="login()">Se connecter</button>
+      </div>
+      
+      <div id="userInfo" class="user-info hidden">
+        <p><strong>Connecté en tant que :</strong> <span id="userName"></span></p>
+        <p><strong>Email :</strong> <span id="userEmail"></span></p>
+        <button class="btn-danger" onclick="logout()">Se déconnecter</button>
+      </div>
     </div>
-
-    <div class="endpoint">
-      <span class="method get">GET</span>
-      <code>/api/articles</code>
-      <p>Liste tous les articles (authentification requise)</p>
+    
+    <!-- SECTION ARTICLES -->
+    <div class="card hidden" id="articlesSection">
+      <h2>📦 Gestion des Articles</h2>
+      
+      <h3>Créer un article</h3>
+      <div class="form-group">
+        <label>Titre :</label>
+        <input type="text" id="articleTitle" placeholder="iPhone 14 Pro">
+      </div>
+      
+      <div class="form-group">
+        <label>Description :</label>
+        <textarea id="articleDescription" placeholder="Description détaillée de l'article..."></textarea>
+      </div>
+      
+      <div class="form-group">
+        <label>Prix de départ (€) :</label>
+        <input type="number" id="articlePrice" placeholder="100" min="0" step="0.01">
+      </div>
+      
+      <button onclick="createArticle()">Créer l'article</button>
+      
+      <hr style="margin: 30px 0; border: none; border-top: 2px solid #eee;">
+      
+      <h3>Liste des articles</h3>
+      <button class="btn-success" onclick="getAllArticles()">Afficher tous les articles</button>
+      <button class="btn-success" onclick="getMyArticles()">Mes articles uniquement</button>
+      
+      <div id="articlesList" style="margin-top: 20px;"></div>
     </div>
-
-    <div class="endpoint">
-      <span class="method post">POST</span>
-      <code>/api/articles</code>
-      <p>Créer un article (authentification requise)</p>
+    
+    <!-- SECTION IMAGES -->
+    <div class="card hidden" id="imagesSection">
+      <h2>🖼️ Gestion des Images</h2>
+      
+      <div class="form-group">
+        <label>ID de l'article :</label>
+        <input type="number" id="imageArticleId" placeholder="1" min="1">
+      </div>
+      
+      <div class="form-group">
+        <label>Sélectionner une image :</label>
+        <input type="file" id="imageFile" accept="image/*">
+      </div>
+      
+      <button onclick="uploadImage()">Uploader l'image</button>
+      
+      <hr style="margin: 30px 0; border: none; border-top: 2px solid #eee;">
+      
+      <h3>Voir les images d'un article</h3>
+      <div class="form-group">
+        <label>ID de l'article :</label>
+        <input type="number" id="viewImageArticleId" placeholder="1" min="1">
+      </div>
+      
+      <button class="btn-success" onclick="getArticleImages()">Afficher les images</button>
+      
+      <div id="imagesList" style="margin-top: 20px;"></div>
     </div>
-
-    <div class="endpoint">
-      <span class="method post">POST</span>
-      <code>/api/images/article/:id</code>
-      <p>Upload une image pour un article (authentification requise)</p>
+    
+    <!-- SECTION RÉPONSE API -->
+    <div class="card">
+      <h2>📡 Dernière réponse de l'API</h2>
+      <pre id="apiResponse">Aucune requête effectuée</pre>
     </div>
-
-    <h2>👥 Comptes de test</h2>
-    <ul>
-      <li>alice@test.com / password123</li>
-      <li>bob@test.com / password123</li>
-      <li>charlie@test.com / password123</li>
-    </ul>
-
-    <h2>📖 Documentation</h2>
-    <p>Consultez le fichier README.md pour plus de détails sur l'utilisation de l'API.</p>
   </div>
+
+  <script>
+    // URL de base de l'API
+    const API_URL = 'http://localhost:3000/api';
+    
+    // Token stocké en mémoire
+    let authToken = null;
+    let currentUser = null;
+    
+    // Fonction pour afficher les messages de statut
+    function showStatus(message, type = 'info') {
+      const status = document.getElementById('status');
+      status.textContent = message;
+      status.className = type;
+      setTimeout(() => {
+        status.style.display = 'none';
+      }, 5000);
+    }
+    
+    // Fonction pour afficher la réponse API
+    function showApiResponse(data) {
+      document.getElementById('apiResponse').textContent = JSON.stringify(data, null, 2);
+    }
+    
+    // CONNEXION
+    async function login() {
+      const email = document.getElementById('loginEmail').value;
+      const password = document.getElementById('loginPassword').value;
+      
+      try {
+        const response = await fetch(`${API_URL}/auth/login`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ email, password })
+        });
+        
+        const data = await response.json();
+        showApiResponse(data);
+        
+        if (response.ok) {
+          authToken = data.token;
+          currentUser = data.user;
+          
+          // Afficher les infos utilisateur
+          document.getElementById('userName').textContent = currentUser.username;
+          document.getElementById('userEmail').textContent = currentUser.email;
+          
+          // Masquer le formulaire de connexion
+          document.getElementById('loginForm').classList.add('hidden');
+          document.getElementById('userInfo').classList.remove('hidden');
+          
+          // Afficher les sections protégées
+          document.getElementById('articlesSection').classList.remove('hidden');
+          document.getElementById('imagesSection').classList.remove('hidden');
+          
+          showStatus('✅ Connexion réussie !', 'success');
+        } else {
+          showStatus('❌ ' + data.error, 'error');
+        }
+      } catch (error) {
+        showStatus('❌ Erreur : ' + error.message, 'error');
+        showApiResponse({ error: error.message });
+      }
+    }
+    
+    // DÉCONNEXION
+    function logout() {
+      authToken = null;
+      currentUser = null;
+      
+      // Réafficher le formulaire de connexion
+      document.getElementById('loginForm').classList.remove('hidden');
+      document.getElementById('userInfo').classList.add('hidden');
+      
+      // Masquer les sections protégées
+      document.getElementById('articlesSection').classList.add('hidden');
+      document.getElementById('imagesSection').classList.add('hidden');
+      
+      // Vider les listes
+      document.getElementById('articlesList').innerHTML = '';
+      document.getElementById('imagesList').innerHTML = '';
+      
+      showStatus('👋 Déconnexion réussie', 'info');
+      showApiResponse({ message: 'Déconnecté' });
+    }
+    
+    // CRÉER UN ARTICLE
+    async function createArticle() {
+      const title = document.getElementById('articleTitle').value;
+      const description = document.getElementById('articleDescription').value;
+      const prix_depart = document.getElementById('articlePrice').value;
+      
+      if (!title || !description || !prix_depart) {
+        showStatus('⚠️ Veuillez remplir tous les champs', 'error');
+        return;
+      }
+      
+      try {
+        const response = await fetch(`${API_URL}/articles`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`
+          },
+          body: JSON.stringify({ title, description, prix_depart: parseFloat(prix_depart) })
+        });
+        
+        const data = await response.json();
+        showApiResponse(data);
+        
+        if (response.ok) {
+          showStatus('✅ Article créé avec succès !', 'success');
+          
+          // Vider les champs
+          document.getElementById('articleTitle').value = '';
+          document.getElementById('articleDescription').value = '';
+          document.getElementById('articlePrice').value = '';
+          
+          // Rafraîchir la liste
+          getAllArticles();
+        } else {
+          showStatus('❌ ' + data.error, 'error');
+        }
+      } catch (error) {
+        showStatus('❌ Erreur : ' + error.message, 'error');
+        showApiResponse({ error: error.message });
+      }
+    }
+    
+    // RÉCUPÉRER TOUS LES ARTICLES
+    async function getAllArticles() {
+      try {
+        const response = await fetch(`${API_URL}/articles`, {
+          headers: {
+            'Authorization': `Bearer ${authToken}`
+          }
+        });
+        
+        const data = await response.json();
+        showApiResponse(data);
+        
+        if (response.ok) {
+          displayArticles(data.articles);
+          showStatus(`📦 ${data.articles.length} article(s) trouvé(s)`, 'success');
+        } else {
+          showStatus('❌ ' + data.error, 'error');
+        }
+      } catch (error) {
+        showStatus('❌ Erreur : ' + error.message, 'error');
+        showApiResponse({ error: error.message });
+      }
+    }
+    
+    // RÉCUPÉRER MES ARTICLES
+    async function getMyArticles() {
+      try {
+        const response = await fetch(`${API_URL}/articles/my`, {
+          headers: {
+            'Authorization': `Bearer ${authToken}`
+          }
+        });
+        
+        const data = await response.json();
+        showApiResponse(data);
+        
+        if (response.ok) {
+          displayArticles(data.articles);
+          showStatus(`📦 ${data.articles.length} de vos article(s)`, 'success');
+        } else {
+          showStatus('❌ ' + data.error, 'error');
+        }
+      } catch (error) {
+        showStatus('❌ Erreur : ' + error.message, 'error');
+        showApiResponse({ error: error.message });
+      }
+    }
+    
+    // AFFICHER LES ARTICLES
+    function displayArticles(articles) {
+      const container = document.getElementById('articlesList');
+      
+      if (articles.length === 0) {
+        container.innerHTML = '<p style="color: #999;">Aucun article trouvé</p>';
+        return;
+      }
+      
+      container.innerHTML = articles.map(article => `
+        <div class="article-item">
+          <h3>${article.title}</h3>
+          <p>${article.description}</p>
+          <p class="price">Prix de départ : ${article.prix_depart} €</p>
+          <p style="font-size: 0.9em; color: #999;">
+            Auteur : ${article.author || 'Inconnu'} | 
+            ID : ${article.id} |
+            Créé le : ${new Date(article.created_at).toLocaleDateString('fr-FR')}
+          </p>
+        </div>
+      `).join('');
+    }
+    
+    // UPLOADER UNE IMAGE
+    async function uploadImage() {
+      const articleId = document.getElementById('imageArticleId').value;
+      const fileInput = document.getElementById('imageFile');
+      
+      if (!articleId || !fileInput.files[0]) {
+        showStatus('⚠️ Veuillez sélectionner un article et une image', 'error');
+        return;
+      }
+      
+      const formData = new FormData();
+      formData.append('image', fileInput.files[0]);
+      
+      try {
+        const response = await fetch(`${API_URL}/images/article/${articleId}`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${authToken}`
+          },
+          body: formData
+        });
+        
+        const data = await response.json();
+        showApiResponse(data);
+        
+        if (response.ok) {
+          showStatus('✅ Image uploadée avec succès !', 'success');
+          fileInput.value = '';
+        } else {
+          showStatus('❌ ' + data.error, 'error');
+        }
+      } catch (error) {
+        showStatus('❌ Erreur : ' + error.message, 'error');
+        showApiResponse({ error: error.message });
+      }
+    }
+    
+    // RÉCUPÉRER LES IMAGES D'UN ARTICLE
+    async function getArticleImages() {
+      const articleId = document.getElementById('viewImageArticleId').value;
+      
+      if (!articleId) {
+        showStatus('⚠️ Veuillez entrer un ID d\'article', 'error');
+        return;
+      }
+      
+      try {
+        const response = await fetch(`${API_URL}/images/article/${articleId}`, {
+          headers: {
+            'Authorization': `Bearer ${authToken}`
+          }
+        });
+        
+        const data = await response.json();
+        showApiResponse(data);
+        
+        if (response.ok) {
+          displayImages(data.images);
+          showStatus(`🖼️ ${data.images.length} image(s) trouvée(s)`, 'success');
+        } else {
+          showStatus('❌ ' + data.error, 'error');
+        }
+      } catch (error) {
+        showStatus('❌ Erreur : ' + error.message, 'error');
+        showApiResponse({ error: error.message });
+      }
+    }
+    
+    // AFFICHER LES IMAGES
+    function displayImages(images) {
+      const container = document.getElementById('imagesList');
+      
+      if (images.length === 0) {
+        container.innerHTML = '<p style="color: #999;">Aucune image trouvée</p>';
+        return;
+      }
+      
+      container.innerHTML = images.map(image => `
+        <div class="article-item">
+          <img src="${image.url}" alt="${image.filename}" style="max-width: 300px; border-radius: 8px; margin-bottom: 10px;">
+          <p><strong>Fichier :</strong> ${image.filename}</p>
+          <p><strong>ID :</strong> ${image.id}</p>
+          <p><strong>Uploadé le :</strong> ${new Date(image.uploaded_at).toLocaleDateString('fr-FR')}</p>
+        </div>
+      `).join('');
+    }
+  </script>
 </body>
 </html>
