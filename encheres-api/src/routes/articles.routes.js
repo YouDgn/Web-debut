@@ -15,4 +15,6 @@ router.get('/:id', authenticateToken, articlesController.getArticleById);
 // POST /api/articles - Créer un article
 router.post('/', authenticateToken, articlesController.createArticle);
 
+router.delete('/:id', authenticateToken, articlesController.deleteArticle);
+
 module.exports = router;

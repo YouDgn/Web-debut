@@ -118,9 +118,52 @@ async function getMyArticles(req, res, next) {
   }
 }
 
+/**
+ * Supprimer un article
+ */
+async function deleteArticle(req, res, next) {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id;
+
+    console.log('🗑️ Suppression article ID:', id, 'par user:', userId);
+
+    // Vérifier que l'article existe
+    const article = await db.getAsync('SELECT * FROM articles WHERE id = ?', [id]);
+
+    if (!article) {
+      console.log('❌ Article non trouvé');
+      return res.status(404).json({ 
+        error: 'Article non trouvé' 
+      });
+    }
+
+    // Vérifier que l'utilisateur est le propriétaire
+    if (article.user_id !== userId) {
+      console.log('❌ Non autorisé');
+      return res.status(403).json({ 
+        error: 'Non autorisé' 
+      });
+    }
+
+    // Supprimer l'article
+    await db.runAsync('DELETE FROM articles WHERE id = ?', [id]);
+    console.log('✅ Article supprimé');
+
+    res.status(200).json({
+      message: 'Article supprimé avec succès'
+    });
+
+  } catch (error) {
+    console.error('❌ Erreur suppression:', error);
+    next(error);
+  }
+}
+
 module.exports = {
   createArticle,
   getAllArticles,
   getArticleById,
-  getMyArticles
+  getMyArticles,
+  deleteArticle
 };
